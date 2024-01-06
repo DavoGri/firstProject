@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -10,31 +11,35 @@ class ProductController extends Controller
 
     public function index()
     {
-       User::find();
+
     }
 
 
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
 
 
     }
 
 
-    public function update(Request $request, $id)
+    public function update(ProductRequest $request, $product_id)
     {
 
 
     }
 
 
-    public function delete($id)
+    public function delete($product_id)
     {
 
     }
 
 
-    public function show($id)
+    public function show($product_id)
+    {
+
+    }
+    public function filterByCategory($category_id)
     {
 
     }
