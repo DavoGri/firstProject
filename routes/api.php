@@ -6,7 +6,11 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+
+
 
 Route::get('/products', [ProductController::class, 'index']);
 
@@ -51,16 +55,18 @@ Route::delete('/users/{user_id}',[UserController::class,'delete']);
 
 
 
+Route::middleware('auth')->group(function (){
+    Route::get('/cart/{product_id}', [CartController::class, 'showCart']);
 
-Route::get('/cart', [CartController::class, 'showCart']);
+    Route::post('/cart/add/{product_id}', [CartController::class, 'addToCart']);
 
-Route::post('/cart/add/{product_id}', [CartController::class, 'addToCart']);
+    Route::put('cart/update/{product_id}',[CartController::class,'updateProductFromCart']);
 
-Route::put('cart/update/{product_id}',[CartController::class,'updateProductFromCart']);
+    Route::delete('/cart/remove/{product_id}', [CartController::class, 'removeFromCart']);
 
-Route::delete('/cart/remove/{product_id}', [CartController::class, 'removeFromCart']);
+    Route::delete('/cart/clear', [CartController::class, 'clear']);
 
-Route::delete('/cart/clear', [CartController::class, 'clear']);
+});
 
 
 
