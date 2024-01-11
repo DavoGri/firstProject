@@ -1,14 +1,14 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
 
 
 
@@ -41,9 +41,21 @@ Route::delete('/categories/{category_id}', [CategoryController::class, 'delete']
 
 
 
-Route::post('/users/register',[UserController::class,'registerUser']);
+Route::get('/register',[RegisterController::class,'index']);
 
-Route::post('/users/login',[UserController::class,'loginUser']);
+Route::post('/register',[RegisterController::class,'register']);
+
+Route::get('/login',[LoginController::class,'index'])->name('login.index');
+
+Route::post('/login',[LoginController::class,'login'])->name('login');
+
+
+
+
+
+
+
+
 
 Route::get('/users/{user_id}',[UserController::class,'show']);
 
@@ -55,10 +67,11 @@ Route::delete('/users/{user_id}',[UserController::class,'delete']);
 
 
 
-Route::middleware('auth')->group(function (){
+Route::middleware('auth:api')->group(function (){
+
     Route::get('/cart/{product_id}', [CartController::class, 'showCart']);
 
-    Route::post('/cart/add/{product_id}', [CartController::class, 'addToCart']);
+    Route::post('/cart/add/{product_id}/{quantity}', [CartController::class, 'addToCart']);
 
     Route::put('cart/update/{product_id}',[CartController::class,'updateProductFromCart']);
 
@@ -71,18 +84,19 @@ Route::middleware('auth')->group(function (){
 
 
 
-Route::get('/orders', [OrderController::class, 'index']);
+Route::middleware('auth:api')->group(function (){
 
-Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders', [OrderController::class, 'index']);
 
-Route::get('/orders/{order_id}', [OrderController::class, 'show']);
+    Route::post('/orders', [OrderController::class, 'store']);
 
-Route::put('/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
+    Route::get('/orders/{order_id}', [OrderController::class, 'show']);
 
-Route::delete('/orders/{order_id}', [OrderController::class, 'delete']);
+    Route::put('/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
 
-Route::get('/orders/{order_id}/total', [OrderController::class, 'getOrderTotal']);
+    Route::delete('/orders/{order_id}', [OrderController::class, 'delete']);
 
-//Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//    return $request->user();
-//});
+    Route::get('/orders/{order_id}/total', [OrderController::class, 'getOrderTotal']);
+
+
+});

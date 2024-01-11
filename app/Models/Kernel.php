@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http;
+namespace App\Models;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -42,6 +42,7 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+//            \Illuminate\Auth\Middleware\Authenticate::class,
         ],
     ];
 

@@ -2,42 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\LoginRequest;
+
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Laravel\Passport\HasApiTokens;
 
 class UserController extends Controller
 {
-    public function registerUser(UserRequest $request)
-    {
-        $data = $request->toArray();
-        $user = User::create($data);
-
-        if ($user) {
-            Auth::login($user);
-            return response()->json(['message' => "пользователь создан"]);
-        }
-        return response()->json(['message' => "не удалось создать пользователя"]);
-    }
-
-
-    public function loginUser(LoginRequest $request)
-    {
-        if (Auth::check()) {
-            return response()->json(['message' => "пользователь аутентифицирован"]);
-        }
-        $formFields = $request->all();
-        if (Auth::attempt($formFields)) {
-            return response()->json(['message' => "пользователь аутентифицирован!!"]);
-        }
-
-        return response()->json(['message' => "не удалось аутентифицироваться"]);
-
-    }
-
+    use HasApiTokens;
 
     public function update(UserRequest $request, $user_id)
     {
