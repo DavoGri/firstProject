@@ -12,6 +12,19 @@ class UserController extends Controller
 {
     use HasApiTokens;
 
+
+    public function show($user_id)
+    {
+        try {
+            $user = User::findOrFail($user_id);
+
+            return response()->json($user);
+
+        } catch (ModelNotFoundException $exception) {
+            return response()->json(['message' => 'пользователь не найден'], 404);
+        }
+
+    }
     public function update(UserRequest $request, $user_id)
     {
         try {
@@ -38,18 +51,7 @@ class UserController extends Controller
     }
 
 
-    public function show($user_id)
-    {
-        try {
-            $user = User::findOrFail($user_id);
 
-            return response()->json($user);
-
-        } catch (ModelNotFoundException $exception) {
-            return response()->json(['message' => 'пользователь не найден'], 404);
-        }
-
-    }
 }
 
 

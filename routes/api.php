@@ -69,7 +69,7 @@ Route::delete('/users/{user_id}',[UserController::class,'delete']);
 
 Route::middleware('auth:api')->group(function (){
 
-    Route::get('/cart/{product_id}', [CartController::class, 'showCart']);
+    Route::get('/cart', [CartController::class, 'showCart']);
 
     Route::post('/cart/add/{product_id}/{quantity}', [CartController::class, 'addToCart']);
 

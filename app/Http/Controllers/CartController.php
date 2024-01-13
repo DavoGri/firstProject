@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CartRequest;
 use App\Models\Cart;
 use App\Models\Product;
+
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
-    public function showCart($product_id)
+    public function showCart(Authenticatable $user)
     {
-       $cart = Cart::findOrFail($product_id);
-       return response()->json($cart);
+        try {
+            $cartItems = $user->cart()->with('product')->get();
+
+            return response()->json(['cart_items' => $cartItems]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Не удалось получить содержимое корзины'], 500);
+        }
     }
 
 
@@ -52,22 +59,29 @@ class CartController extends Controller
     }
 
 
-    public function updateProductFromCart(Request $request, $product_id)
+    public function updateProductFromCart(CartRequest $request, $product_id)
     {
         try {
-            $this->validate($request, [
-                'total_item' => 'required|numeric|min:1',
-            ]);
-
             $total_item = $request->input('total_item');
 
             $cartItem = Cart::where('product_id', $product_id)->firstOrFail();
 
 
+            $product = $cartItem->product;
+
+
+            $newTotal = $product->price * $total_item;
+
             $cartItem->total_items = $total_item;
             $cartItem->save();
 
-            return response()->json(['message' => 'Товар в корзине обновлен успешно'], 201);
+            // Обновление общей суммы корзины
+            $cart = $cartItem->user->cart;
+
+            $cart->total_price = $newTotal;
+            $cart->save();
+
+            return response()->json(['message' => 'Товар в корзине обновлен успешно'], 200);
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Ошибка валидации: ' . $e->getMessage()], 422);
         } catch (ModelNotFoundException $e) {
