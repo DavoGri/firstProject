@@ -18,6 +18,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'admin',
     ];
 
 
@@ -32,7 +33,10 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-
+     public function isAdmin()
+     {
+         return $this->admin;
+     }
     public function orders()
     {
         return $this->hasMany(Order::class);

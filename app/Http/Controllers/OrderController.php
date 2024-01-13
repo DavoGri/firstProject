@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
@@ -26,77 +29,131 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         try {
-            // Получаем ID текущего аутентифицированного пользователя
+            // Получаем идентификатор текущего пользователя
             $userId = Auth::id();
 
-            // Создаем заказ для текущего пользователя
-            $order = Order::create([
-                'user_id' => $userId,
-                'status' => 'pending',
-                'total_amount' => 0, // Начальное значение
-                // Другие поля заказа
-            ]);
-            if (!$order) {
-                return response()->json(['error' => 'Не удалось создать заказ!!'], 500);
-            }
-
-            // Получаем товары из корзины текущего пользователя
+            // Получаем товары из корзины пользователя
             $cartItems = Cart::where('user_id', $userId)->with('product')->get();
 
+            // Проверяем, не пуста ли корзина пользователя
             if ($cartItems->isEmpty()) {
                 return response()->json(['error' => 'Корзина пользователя пуста'], 400);
             }
 
-            // Добавляем товары из корзины в заказ
-            foreach ($cartItems as $cartItem) {
-                $product = $cartItem->product;
-                $quantityInCart = $cartItem->total_items;
+            // Создаем новый заказ
+            $order = Order::create([
+                'user_id' => $userId,
+                'status' => Constants::ORDER_STATUS_PENDING,
+                'total_amount' => 0,
+            ]);
 
-                $itemTotal=$product->price * $quantityInCart;
-
-                $order->products()->attach($product->id, [
-                    'quantity' => $quantityInCart,
-                    'item_total'=>$itemTotal,
-                ]);
-
-
-                // Обновляем общую сумму заказа
-                $order->total_amount += ($product->price * $quantityInCart);
+            // Проверяем, успешно ли создан заказ
+            if (!$order) {
+                return response()->json(['error' => 'Не удалось создать заказ!!'], 500);
             }
 
-            // Сохраняем общую сумму заказа после добавления товаров
+            // Итерируем по товарам в корзине
+            foreach ($cartItems as $cartItem) {
+                // Получаем информацию о товаре
+                $product = $cartItem->product;
+                // Получаем количество данного товара в корзине
+                $quantityInCart = $cartItem->total_items;
+
+                // Рассчитываем общую стоимость товара
+                $itemTotal = $product->price * $quantityInCart;
+
+                // Добавляем товар к заказу с указанием количества и общей стоимости
+                $order->products()->attach($product->id, [
+                    'quantity' => $quantityInCart,
+                    'item_total' => $itemTotal,
+                ]);
+
+                // Обновляем общую стоимость заказа
+                $order->total_amount += $itemTotal;
+            }
+
+            // Сохраняем общую стоимость заказа после добавления товаров
             $order->save();
 
-            // Очищаем корзину после создания заказа
-//            Cart::where('user_id', $userId)->delete();
+            // Очищаем корзину пользователя после создания заказа
+            Cart::where('user_id', $userId)->delete();
 
+            // Возвращаем успешный ответ с информацией о заказе
             return response()->json(['message' => 'Заказ успешно создан', 'order' => $order]);
         } catch (\Exception $e) {
+            // В случае возникновения исключения возвращаем ошибку
             return response()->json(['error' => 'Не удалось создать заказ'], 500);
         }
     }
 
 
-    public function updateOrderStatus(Request $request, $order_id)
+
+
+        public function updateOrderStatus(Request $request, $orderId)
     {
+        try {
 
+            $order = Order::find($orderId);
 
+            if (!$order) {
+                return response()->json(['error' => 'Заказ не найден'], 404);
+            }
+
+            // Обновляем статус заказа
+            $newStatus = $request->input('status');
+            $order->update(['status' => $newStatus]);
+
+            return response()->json(['message' => 'Статус заказа успешно обновлен', 'order' => $order]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Не удалось обновить статус заказа'], 500);
+        }
     }
+
 
 
     public function delete($order_id)
     {
 
+        $user = Auth::user();
+
+
+        if (!$user) {
+            return response()->json(['error' => 'Вы не авторизованы'], 401);
+        }
+
+
+        $order = $user->orders()->find($order_id);
+
+        if (!$order) {
+            return response()->json(['error' => 'Заказ не найден или вы не являетесь его владельцем'], 404);
+        }
+
+
+        $order->delete();
+
+        return response()->json(['message' => 'Заказ успешно удален']);
     }
 
 
     public function show($order_id)
     {
+        try {
 
+            $user = Auth::user();
+
+
+
+            $order = $user->orders()->find($order_id);
+
+            if (!$order) {
+                return response()->json(['error' => 'Заказ не найден или вы не являетесь его владельцем'], 404);
+            }
+
+            return response()->json(['order' => $order]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Не удалось получить информацию о заказе'], 500);
+        }
     }
 
-    public function getOrderTotal($order_id)
-    {
 
-    }
 }

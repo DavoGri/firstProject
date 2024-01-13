@@ -86,13 +86,13 @@ Route::middleware('auth:api')->group(function (){
 
 Route::middleware('auth:api')->group(function (){
 
-    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders', [OrderController::class, 'index'])->middleware('admin');
 
     Route::post('/orders', [OrderController::class, 'store']);
 
     Route::get('/orders/{order_id}', [OrderController::class, 'show']);
 
-    Route::put('/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
+    Route::put('/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus'])->middleware('admin');
 
     Route::delete('/orders/{order_id}', [OrderController::class, 'delete']);
 
