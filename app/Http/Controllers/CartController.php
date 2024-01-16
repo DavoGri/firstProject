@@ -6,9 +6,12 @@ use App\Http\Requests\CartRequest;
 use App\Models\Cart;
 use App\Models\Product;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
@@ -62,52 +65,59 @@ class CartController extends Controller
     public function updateProductFromCart(CartRequest $request, $product_id)
     {
         try {
-            $total_item = $request->input('total_item');
+            $user = $request->user();
+            $cartItem = Cart::where('product_id', $product_id)->where('user_id', $user->id)->firstOrFail();
+
+            $this->authorize('update', $cartItem);
+
+            DB::beginTransaction();
+
+            try {
+                $total_item = $request->input('total_item');
+                $product=$cartItem->product;
+                $cartItem->total_items = $total_item;
+                $cartItem->total_price = ($product->price * $total_item);
+                $cartItem->save();
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+            return response()->json(['message' => 'Товар в корзине обновлен успешно'], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Товар не найден в корзине'], 404);
+        } catch (AuthorizationException $e) {
+            return response()->json(['message' => 'У вас нет прав для выполнения этого действия'], 403);
+        } catch (\Exception $e) {
+            Log::error('Ошибка при обновлении товара в корзине: ' . $e->getMessage());
+            return response()->json(['message' => 'Что-то пошло не так'], 500);
+        }
+    }
+    public function removeFromCart($product_id)
+    {
+        try {
 
             $cartItem = Cart::where('product_id', $product_id)->firstOrFail();
 
 
-            $product = $cartItem->product;
+//            $this->authorize('delete', $cartItem);
 
 
-            $newTotal = $product->price * $total_item;
+            $cartItem->delete();
 
-            $cartItem->total_items = $total_item;
-            $cartItem->save();
-
-            // Обновление общей суммы корзины
-            $cart = $cartItem->user->cart;
-
-            $cart->total_price = $newTotal;
-            $cart->save();
-
-            return response()->json(['message' => 'Товар в корзине обновлен успешно'], 200);
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Ошибка валидации: ' . $e->getMessage()], 422);
+            return response()->json(['message' => 'Товар успешно удален из корзины'], 200);
+        } catch (AuthorizationException $e) {
+            return response()->json(['message' => 'У вас нет прав для выполнения этого действия'], 403);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Товар не найден в корзине'], 404);
         } catch (\Exception $e) {
+            // Логгирование ошибки
+            Log::error('Ошибка при удалении товара из корзины: ' . $e->getMessage());
             return response()->json(['message' => 'Что-то пошло не так'], 500);
         }
     }
-
-
-
-    public function removeFromCart($product_id)
-    {
-        try {
-        $cartItem = Cart::where('product_id', $product_id)->firstOrFail();
-
-        $cartItem->delete();
-
-        return response()->json(['message' => 'Товар успешно удален из корзины'], 200);
-    } catch (ModelNotFoundException $e) {
-        return response()->json(['message' => 'Товар не найден в корзине'], 404);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Что-то пошло не так'], 500);
-    }
-    }
-
 
     public function clear()
     {

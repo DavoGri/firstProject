@@ -18,7 +18,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'admin',
+        'role',
+        'super_admin_created'
     ];
 
 

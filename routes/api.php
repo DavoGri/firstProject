@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -14,11 +15,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/products', [ProductController::class, 'index']);
 
-Route::post('/products', [ProductController::class, 'store']);
+Route::post('/products', [ProductController::class, 'store'])->middleware('auth:api','admin');
 
 Route::get('/products/{product_id}', [ProductController::class, 'show']);
 
-Route::put('/products/{product_id}', [ProductController::class, 'update']);
+Route::put('/products/{product_id}', [ProductController::class, 'update'])->middleware('auth:api','admin');
 
 Route::delete('/products/{product_id}', [ProductController::class, 'delete']);
 
@@ -48,6 +49,10 @@ Route::post('/register',[RegisterController::class,'register']);
 Route::get('/login',[LoginController::class,'index'])->name('login.index');
 
 Route::post('/login',[LoginController::class,'login'])->name('login');
+
+Route::post('/create-super-admin',[SuperAdminController::class,'create']);
+
+Route::post('/create-admin',[SuperAdminController::class,'createAdmin'])->middleware('auth:api');
 
 
 

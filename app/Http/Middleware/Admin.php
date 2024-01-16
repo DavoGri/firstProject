@@ -16,10 +16,9 @@ class Admin
     public function handle(Request $request, Closure $next): Response
     {
 
-        if (auth()->check() && auth()->user()->isAdmin()) {
+        if ($request->user() && $request->user()->role === 'admin') {
             return $next($request);
         }
-
 
 
         return response()->json(['error' => 'У вас нет прав для выполнения этого действия'], 403);

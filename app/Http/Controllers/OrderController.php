@@ -27,34 +27,34 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         try {
-            // Получаем идентификатор текущего пользователя
+
             $userId = Auth::id();
 
-            // Получаем товары из корзины пользователя
+
             $cartItems = Cart::where('user_id', $userId)->with('product')->get();
 
-            // Проверяем, не пуста ли корзина пользователя
+
             if ($cartItems->isEmpty()) {
                 return response()->json(['error' => 'Корзина пользователя пуста'], 400);
             }
 
-            // Создаем новый заказ
+
             $order = Order::create([
                 'user_id' => $userId,
                 'status' => Constants::ORDER_STATUS_PENDING,
                 'total_amount' => 0,
             ]);
 
-            // Проверяем, успешно ли создан заказ
+
             if (!$order) {
                 return response()->json(['error' => 'Не удалось создать заказ!!'], 500);
             }
 
             // Итерируем по товарам в корзине
             foreach ($cartItems as $cartItem) {
-                // Получаем информацию о товаре
+
                 $product = $cartItem->product;
-                // Получаем количество данного товара в корзине
+
                 $quantityInCart = $cartItem->total_items;
 
                 // Рассчитываем общую стоимость товара
@@ -66,20 +66,20 @@ class OrderController extends Controller
                     'item_total' => $itemTotal,
                 ]);
 
-                // Обновляем общую стоимость заказа
+
                 $order->total_amount += $itemTotal;
             }
 
-            // Сохраняем общую стоимость заказа после добавления товаров
+
             $order->save();
 
-            // Очищаем корзину пользователя после создания заказа
+
             Cart::where('user_id', $userId)->delete();
 
-            // Возвращаем успешный ответ с информацией о заказе
+
             return response()->json(['message' => 'Заказ успешно создан', 'order' => $order]);
         } catch (\Exception $e) {
-            // В случае возникновения исключения возвращаем ошибку
+
             return response()->json(['error' => 'Не удалось создать заказ'], 500);
         }
     }
@@ -97,7 +97,7 @@ class OrderController extends Controller
                 return response()->json(['error' => 'Заказ не найден'], 404);
             }
 
-            // Обновляем статус заказа
+
             $newStatus = $request->input('status');
             $order->update(['status' => $newStatus]);
 
