@@ -3,100 +3,119 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductRequest;
+use App\Http\Requests\ProductUpdateRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
+
 
 class ProductController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $products = Product::all();
-            return response()->json($products);
+
+
+            $categories = $request->input('category_id', []);
+
+            // Фильтрация товаров по категориям и в наличии
+            $productsQuery = Product::when(!empty($categories), function ($query) use ($categories) {
+                $query->whereIn('category_id', $categories);
+            })
+                ->where('stock_quantity', '>', 0)
+                ->paginate(5);
+
+
+            return ProductResource::collection($productsQuery);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
+            return response()->json(['message' => 'Что-то пошло не так: ' . $e->getMessage()], 500);
         }
     }
+
+
+
+
+
+    public function lowStock()
+    {
+        try {
+
+            $productsLowStock = Product::where('stock_quantity', '<', 5)->paginate(5);
+
+            return ProductResource::collection($productsLowStock);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Что-то пошло не так: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
 
 
     public function store(ProductRequest $request)
     {
         try {
-            $product = $request->toArray();
+            $data = $request->validated();
+            $product = Product::create($data);
 
-            Product::create($product);
+            $message = 'Товар успешно создан';
+            $resource = new ProductResource($product);
+            $resource->additional(['message' => $message]);
 
-            return response()->json(['message' => 'товар успешно создан']);
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Ошибка валидации: ' . $e->getMessage()], 422);
+            return $resource;
+
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
+            return response()->json(['message' => 'Что-то пошло не так', 'error' => $e->getMessage()], 500);
         }
     }
 
-
-    public function update(ProductRequest $request, $product_id)
+    public function update(ProductUpdateRequest $request, $product_id)
     {
         try {
             $product = Product::findOrFail($product_id);
 
-            $product->update([
-                'name' => $request->input('name'),
-                'price' => $request->input('price'),
-                'description' => $request->input('description'),
-                'stock_quantity' => $request->input('stock_quantity'),
-                'category_id' => $request->input('category_id'),
-            ]);
 
-            return response()->json(['message' => 'данные успешно обновлены']);
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Ошибка валидации: ' . $e->getMessage()], 422);
+            $updateData = $request->only(['name', 'price', 'description', 'stock_quantity', 'category_id']);
+
+
+            $product->update($updateData);
+
+            $message = 'Товар успешно обновлен';
+            $resource = new ProductResource($product);
+            $resource->additional(['message' => $message]);
+
+            return $resource;
         } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Товар не найден'], 404);
+            return response()->json(['error' => 'Товар не найден.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
+            return response()->json(['error' => 'Не удалось обновить товар.', 'details' => $e->getMessage()], 500);
         }
     }
-
-
     public function delete($product_id)
     {
         try {
             $product = Product::findOrFail($product_id);
             $product->delete();
-            return response()->json(['message' => 'товар успешно удален']);
+            return response()->json(['message' => 'Товар успешно удален']);
         } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Товар не найден'], 404);
+            return response()->json(['error' => 'Товар не найден.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
+            return response()->json(['error' => 'Не удалось удалить товар.', 'details' => $e->getMessage()], 500);
         }
     }
-
 
     public function show($product_id)
     {
         try {
             $product = Product::findOrFail($product_id);
-
-            return response()->json($product);
+            return new ProductResource($product);
         } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'Товар не найден'], 404);
+            return response()->json(['error' => 'Товар не найден.'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
+            return response()->json(['error' => 'Не удалось найти товар.', 'details' => $e->getMessage()], 500);
         }
     }
 
-    public function filterByCategory($category_id)
-    {
-        try {
-            $products = Product::where('category_id', $category_id)->get();
-
-            return response()->json($products);
-
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Что-то пошло не так'], 500);
-        }
-    }
 }

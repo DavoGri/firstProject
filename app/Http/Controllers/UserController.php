@@ -29,7 +29,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($user_id);
-            $user->update($request->all());
+            $user->update($request->validated());
             return response()->json(['message' => 'данные пользователя успешно обновлены']);
         } catch (ModelNotFoundException $exception) {
             return response()->json(['message' => 'пользователь не найден'], 404);

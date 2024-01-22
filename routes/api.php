@@ -21,16 +21,16 @@ Route::get('/products/{product_id}', [ProductController::class, 'show']);
 
 Route::put('/products/{product_id}', [ProductController::class, 'update'])->middleware('auth:api','admin');
 
-Route::delete('/products/{product_id}', [ProductController::class, 'delete']);
+Route::delete('/products/{product_id}', [ProductController::class, 'delete'])->middleware('auth:api','admin');;
 
-Route::get('/products/category/{category_id}', [ProductController::class, 'filterByCategory']);
+Route::get('/products/stock', [ProductController::class,'lowStock']);
 
 
 
 
 Route::get('/categories', [CategoryController::class, 'index']);
 
-Route::post('/categories', [CategoryController::class, 'store']);
+Route::post('/categories', [CategoryController::class, 'store'])->middleware('admin');
 
 Route::get('/categories/{category_id}/products', [CategoryController::class, 'getProductByCategory']);
 
@@ -101,7 +101,7 @@ Route::middleware('auth:api')->group(function (){
 
     Route::delete('/orders/{order_id}', [OrderController::class, 'delete']);
 
-    Route::get('/orders/{order_id}/total', [OrderController::class, 'getOrderTotal']);
+
 
 
 });

@@ -22,7 +22,7 @@ class CategoryController extends Controller
     public function store(CategoryRequest $request)
     {
         try {
-            $categories = $request->toArray();
+            $categories = $request->validated();
 
             Category::create($categories);
 
@@ -42,7 +42,7 @@ class CategoryController extends Controller
             if (!$category) {
                 return response()->json(['error' => 'Категория не найдена'], 404);
             }
-            $category->update($request->all());
+            $category->update($request->validated());
             return response()->json(['message' => 'категория успешно обновлена']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Не удалось обновить категорию'], 500);
