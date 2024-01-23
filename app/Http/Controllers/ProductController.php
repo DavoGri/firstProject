@@ -38,7 +38,7 @@ class ProductController extends Controller
 
 
 
-    public function lowStock()
+    public function Stock()
     {
         try {
 

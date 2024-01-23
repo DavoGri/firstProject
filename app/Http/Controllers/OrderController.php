@@ -112,6 +112,10 @@ class OrderController extends Controller
 
 
             $newStatus = $request->input('status');
+
+            if(!in_array($newStatus,Constants::getAllStatuses())){
+                return response()->json(['error'=>'недопустимый статус заказа'],400);
+            }
             $order->update(['status' => $newStatus]);
 
             return response()->json(['message' => 'Статус заказа успешно обновлен', 'order' => $order]);
@@ -122,35 +126,34 @@ class OrderController extends Controller
 
 
 
-    public function delete($order_id)
-    {
-
-        $user = Auth::user();
-
-
-        if (!$user) {
-            return response()->json(['error' => 'Вы не авторизованы'], 401);
-        }
-
-
-        $order = $user->orders()->find($order_id);
-
-        if (!$order) {
-            return response()->json(['error' => 'Заказ не найден или вы не являетесь его владельцем'], 404);
-        }
-
-
-        $order->delete();
-
-        return response()->json(['message' => 'Заказ успешно удален']);
-    }
-
-
-    public function show($order_id)
+    public function delete(Request $request, $order_id)
     {
         try {
 
-            $user = Auth::user();
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json(['error' => 'Вы не авторизованы'], 401);
+            }
+
+            // Поиск заказа пользователя или возврат ошибки 404
+            $order = $user->orders()->findOrFail($order_id);
+
+            // Удаление заказа
+            $order->delete();
+
+            return response()->json(['message' => 'Заказ успешно удален']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Что-то пошло не так: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+    public function show(Request $request,$order_id)
+    {
+        try {
+
+            $user = $request->user();
 
 
 

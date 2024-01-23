@@ -23,20 +23,20 @@ Route::put('/products/{product_id}', [ProductController::class, 'update'])->midd
 
 Route::delete('/products/{product_id}', [ProductController::class, 'delete'])->middleware('auth:api','admin');;
 
-Route::get('/products/stock', [ProductController::class,'lowStock']);
+Route::get('/products/stock', [ProductController::class,'Stock']);
 
 
 
 
 Route::get('/categories', [CategoryController::class, 'index']);
 
-Route::post('/categories', [CategoryController::class, 'store'])->middleware('admin');
+Route::post('/categories', [CategoryController::class, 'store'])->middleware('auth:api','admin');
 
 Route::get('/categories/{category_id}/products', [CategoryController::class, 'getProductByCategory']);
 
-Route::put('/categories/{category_id}', [CategoryController::class, 'update']);
+Route::put('/categories/{category_id}', [CategoryController::class, 'update'])->middleware('auth:api','admin');;
 
-Route::delete('/categories/{category_id}', [CategoryController::class, 'delete']);
+Route::delete('/categories/{category_id}', [CategoryController::class, 'delete'])->middleware('auth:api','admin');;
 
 
 
@@ -49,6 +49,8 @@ Route::post('/register',[RegisterController::class,'register']);
 Route::get('/login',[LoginController::class,'index'])->name('login.index');
 
 Route::post('/login',[LoginController::class,'login'])->name('login');
+
+Route::post('/logout',[LoginController::class,'logout'])->middleware('auth:api');
 
 Route::post('/create-super-admin',[SuperAdminController::class,'create']);
 
@@ -64,9 +66,9 @@ Route::post('/create-admin',[SuperAdminController::class,'createAdmin'])->middle
 
 Route::get('/users/{user_id}',[UserController::class,'show']);
 
-Route::put('/users/{user_id}',[UserController::class,'update']);
+Route::put('/users/{user_id}',[UserController::class,'update'])->middleware('auth:api');
 
-Route::delete('/users/{user_id}',[UserController::class,'delete']);
+Route::delete('/users/{user_id}',[UserController::class,'delete'])->middleware('auth:api');
 
 
 
@@ -82,7 +84,7 @@ Route::middleware('auth:api')->group(function (){
 
     Route::delete('/cart/remove/{product_id}', [CartController::class, 'removeFromCart']);
 
-    Route::delete('/cart/clear', [CartController::class, 'clear']);
+
 
 });
 

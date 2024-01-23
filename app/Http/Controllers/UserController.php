@@ -29,6 +29,9 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($user_id);
+
+            $this->authorize('update',$user);
+
             $user->update($request->validated());
             return response()->json(['message' => 'данные пользователя успешно обновлены']);
         } catch (ModelNotFoundException $exception) {
@@ -43,6 +46,9 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($user_id);
+
+            $this->authorize('delete',$user);
+
             $user->delete();
             return response()->json(['message' => 'пользователь успешно удален']);
         } catch (ModelNotFoundException $exception) {

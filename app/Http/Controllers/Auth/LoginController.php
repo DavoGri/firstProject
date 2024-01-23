@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
@@ -30,6 +31,14 @@ class LoginController extends Controller
 
         return response()->json(['message' => "не удалось аутентифицироваться"],401);
 
+    }
+
+
+    public function destroy(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json(['message' => 'User logged out successfully']);
     }
 
 }
